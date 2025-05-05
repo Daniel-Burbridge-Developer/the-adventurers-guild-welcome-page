@@ -2,5 +2,6 @@
 
 ## TODO:
 
-- [ ] Seperate into more modular components
-- [ ] Go over requirements, see what needs to also be built
+- [ ] Create form with Tanstack Form
+- [ ] Redesign with ShadCN
+- [ ] Revisit Original Documentation / Manifest

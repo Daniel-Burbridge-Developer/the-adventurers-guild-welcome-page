@@ -1,226 +1,129 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useState } from 'react';
+import {
+  mergeForm,
+  useForm,
+  useStore,
+  useTransform,
+  formOptions, // Ensure formOptions is imported
+} from '@tanstack/react-form';
+import {
+  createServerValidate,
+  ServerValidateError,
+  getFormData, // Ensure getFormData is imported
+} from '@tanstack/react-form/start';
+import { createServerFn } from '@tanstack/react-start';
+import { setResponseStatus } from '@tanstack/react-start/server';
 
-export const Route = createFileRoute('/apply/')({
-  component: RouteComponent,
+// Define formOptions *before* serverValidate
+export const formOpts = formOptions({
+  defaultValues: {
+    firstName: '',
+    age: 0,
+  },
 });
 
-function RouteComponent() {
-  return (
-    <div>
-      <JoinUsPage />
-    </div>
-  );
-}
+const serverValidate = createServerValidate({
+  ...formOpts,
+  onServerValidate: ({ value }) => {
+    if (value.age < 12) {
+      return 'Server validation: You must be at least 12 to sign up';
+    }
+  },
+});
 
-interface ApplicationFormData {
-  applicantName: string;
-  contactScroll: string; // For Correspondence
-  lineage: string; // Race
-  vocation: string; // Class/Profession
-  desiredRole: string;
-  previousDeeds?: string; // Accomplishments
-  reasonForJoining?: string;
-}
+export const handleForm = createServerFn({
+  method: 'POST',
+})
+  .validator((data: unknown) => {
+    if (!(data instanceof FormData)) {
+      throw new Error('Invalid form data');
+    }
+    return data;
+  })
+  .handler(async (ctx) => {
+    try {
+      const validatedData = await serverValidate(ctx.data);
+      console.log('validatedData', validatedData);
+      // Persist the form data to the database
+      // await sql`
+      //   INSERT INTO users (name, email, password)
+      //   VALUES (${validatedData.name}, ${validatedData.email}, ${validatedData.password})
+      // `
+    } catch (e) {
+      if (e instanceof ServerValidateError) {
+        // Log form errors or do any other logic here
+        return e.message; // Or e.response depending on your error handling
+      }
 
-function JoinUsPage() {
-  const [formData, setFormData] = useState<ApplicationFormData>({
-    applicantName: '',
-    contactScroll: '',
-    lineage: '',
-    vocation: '',
-    desiredRole: '',
-    previousDeeds: '',
-    reasonForJoining: '',
+      // Some other error occurred when parsing the form
+      console.error(e);
+      setResponseStatus(500);
+      return 'There was an internal error';
+    }
+
+    return 'Form has validated successfully';
   });
 
-  const handleChange = (
-    event: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
-  ) => {
-    const { name, value } = event.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
-  };
+export const getFormDataFromServer = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    return getFormData();
+  }
+);
 
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    // Send application data to the guild's records
-    console.log('Application submitted:', formData);
-    alert(
-      'Your application has been received! The guild will review your request and send a response via scroll.'
-    );
-    // Clear the form
-    setFormData({
-      applicantName: '',
-      contactScroll: '',
-      lineage: '',
-      vocation: '',
-      desiredRole: '',
-      previousDeeds: '',
-      reasonForJoining: '',
-    });
-  };
+export const Route = createFileRoute('/apply/')({
+  component: Home,
+  loader: async () => ({
+    state: await getFormDataFromServer(),
+  }),
+});
+
+function Home() {
+  const { state } = Route.useLoaderData();
+  const form = useForm({
+    ...formOpts,
+    transform: useTransform((baseForm) => mergeForm(baseForm, state), [state]),
+  });
+
+  const formErrors = useStore(form.store, (formState) => formState.errors);
 
   return (
-    <div className='bg-gray-900 py-16 min-h-screen'>
-      <div className='container mx-auto px-6'>
-        <h2 className='text-3xl font-bold text-cyan-200 mb-8 text-center'>
-          Request to Join Our Guild
-        </h2>
-        <div className='bg-gray-800 rounded-lg shadow-xl p-8 md:p-12'>
-          <form onSubmit={handleSubmit} className='space-y-4'>
+    <form action={handleForm.url} method='post' encType={'multipart/form-data'}>
+      {formErrors.map((error) => (
+        <p key={error as unknown as string}>{error}</p>
+      ))}
+
+      <form.Field
+        name='age'
+        validators={{
+          onChange: ({ value }) =>
+            value < 8 ? 'Client validation: You must be at least 8' : undefined,
+        }}
+      >
+        {(field) => {
+          return (
             <div>
-              <label
-                htmlFor='applicantName'
-                className='block text-gray-300 text-sm font-bold mb-2'
-              >
-                Your Name:
-              </label>
               <input
-                type='text'
-                id='applicantName'
-                name='applicantName'
-                value={formData.applicantName}
-                onChange={handleChange}
-                className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-200 leading-tight focus:outline-none focus:shadow-outline bg-gray-700'
-                required
+                name='age'
+                type='number'
+                value={field.state.value}
+                onChange={(e) => field.handleChange(e.target.valueAsNumber)}
               />
+              {field.state.meta.errors.map((error) => (
+                <p key={error as string}>{error}</p>
+              ))}
             </div>
-            <div>
-              <label
-                htmlFor='contactScroll'
-                className='block text-gray-300 text-sm font-bold mb-2'
-              >
-                Contact Scroll (For Correspondence):
-              </label>
-              <input
-                type='email'
-                id='contactScroll'
-                name='contactScroll'
-                value={formData.contactScroll}
-                onChange={handleChange}
-                className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-200 leading-tight focus:outline-none focus:shadow-outline bg-gray-700'
-                required
-                placeholder='Your magical address for replies'
-              />
-            </div>
-            <div>
-              <label
-                htmlFor='lineage'
-                className='block text-gray-300 text-sm font-bold mb-2'
-              >
-                Lineage (Race):
-              </label>
-              <input
-                type='text'
-                id='lineage'
-                name='lineage'
-                value={formData.lineage}
-                onChange={handleChange}
-                className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-200 leading-tight focus:outline-none focus:shadow-outline bg-gray-700'
-                required
-              />
-            </div>
-            <div>
-              <label
-                htmlFor='vocation'
-                className='block text-gray-300 text-sm font-bold mb-2'
-              >
-                Vocation (Class/Profession):
-              </label>
-              <input
-                type='text'
-                id='vocation'
-                name='vocation'
-                value={formData.vocation}
-                onChange={handleChange}
-                className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-200 leading-tight focus:outline-none focus:shadow-outline bg-gray-700'
-                required
-              />
-            </div>
-            <div>
-              <label
-                htmlFor='desiredRole'
-                className='block text-gray-300 text-sm font-bold mb-2'
-              >
-                Desired Role in the Guild:
-              </label>
-              <select
-                id='desiredRole'
-                name='desiredRole'
-                value={formData.desiredRole}
-                onChange={handleChange}
-                className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-200 leading-tight focus:outline-none focus:shadow-outline bg-gray-700'
-                required
-              >
-                <option value=''>-- Select a Role --</option>
-                <option value='Guardian'>Guardian</option>
-                <option value='Arcanist'>Arcanist</option>
-                <option value='Shadow Walker'>Shadow Walker</option>
-                <option value='Divine Hand'>Divine Hand</option>
-                <option value='Wild Tracker'>Wild Tracker</option>
-                {/* Add more guild roles as needed */}
-                <option value='Other'>Other</option>
-              </select>
-              {formData.desiredRole === 'Other' && (
-                <input
-                  type='text'
-                  name='desiredRole'
-                  value={formData.desiredRole}
-                  onChange={handleChange}
-                  placeholder='Specify other role'
-                  className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-200 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 mt-2'
-                  required
-                />
-              )}
-            </div>
-            <div>
-              <label
-                htmlFor='previousDeeds'
-                className='block text-gray-300 text-sm font-bold mb-2'
-              >
-                Previous Deeds (Optional):
-              </label>
-              <textarea
-                id='previousDeeds'
-                name='previousDeeds'
-                value={formData.previousDeeds}
-                onChange={handleChange}
-                className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-200 leading-tight focus:outline-none focus:shadow-outline bg-gray-700'
-                rows={3}
-                placeholder='Share any relevant history or accomplishments.'
-              />
-            </div>
-            <div>
-              <label
-                htmlFor='reasonForJoining'
-                className='block text-gray-300 text-sm font-bold mb-2'
-              >
-                Reason for Joining Our Guild (Optional):
-              </label>
-              <textarea
-                id='reasonForJoining'
-                name='reasonForJoining'
-                value={formData.reasonForJoining}
-                onChange={handleChange}
-                className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-200 leading-tight focus:outline-none focus:shadow-outline bg-gray-700'
-                rows={4}
-                placeholder='Tell us why you seek our fellowship.'
-              />
-            </div>
-            <button
-              type='submit'
-              className='bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-800 text-white font-bold py-3 px-6 rounded-full shadow-md text-lg transition duration-300 focus:outline-none focus:shadow-outline'
-            >
-              Submit Application
-            </button>
-          </form>
-        </div>
-      </div>
-    </div>
+          );
+        }}
+      </form.Field>
+      <form.Subscribe
+        selector={(formState) => [formState.canSubmit, formState.isSubmitting]}
+      >
+        {([canSubmit, isSubmitting]) => (
+          <button type='submit' disabled={!canSubmit}>
+            {isSubmitting ? '...' : 'Submit'}
+          </button>
+        )}
+      </form.Subscribe>
+    </form>
   );
 }

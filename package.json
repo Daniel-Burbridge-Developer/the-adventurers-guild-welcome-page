@@ -9,11 +9,12 @@
     "start": "vinxi start"
   },
   "dependencies": {
+    "@tanstack/react-form": "^1.9.0",
     "@tanstack/react-query": "^5.75.2",
     "@tanstack/react-router": "^1.119.0",
     "@tanstack/react-router-devtools": "^1.119.1",
     "@tanstack/react-start": "^1.119.2",
-    "framer-motion": "^12.9.4",
+    "framer-motion": "^12.9.5",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "server": "link:@tanstack/react-router/server",

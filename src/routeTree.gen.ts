@@ -16,6 +16,7 @@ import { Route as JoinUsIndexImport } from './routes/join-us/index'
 import { Route as GalleryIndexImport } from './routes/gallery/index'
 import { Route as ApplyIndexImport } from './routes/apply/index'
 import { Route as AboutIndexImport } from './routes/about/index'
+import { Route as ApplyIndexGeminiImport } from './routes/apply/index-gemini'
 
 // Create/Update Routes
 
@@ -49,6 +50,12 @@ const AboutIndexRoute = AboutIndexImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
+const ApplyIndexGeminiRoute = ApplyIndexGeminiImport.update({
+  id: '/apply/index-gemini',
+  path: '/apply/index-gemini',
+  getParentRoute: () => rootRoute,
+} as any)
+
 // Populate the FileRoutesByPath interface
 
 declare module '@tanstack/react-router' {
@@ -58,6 +65,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexImport
+      parentRoute: typeof rootRoute
+    }
+    '/apply/index-gemini': {
+      id: '/apply/index-gemini'
+      path: '/apply/index-gemini'
+      fullPath: '/apply/index-gemini'
+      preLoaderRoute: typeof ApplyIndexGeminiImport
       parentRoute: typeof rootRoute
     }
     '/about/': {
@@ -95,6 +109,7 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/apply/index-gemini': typeof ApplyIndexGeminiRoute
   '/about': typeof AboutIndexRoute
   '/apply': typeof ApplyIndexRoute
   '/gallery': typeof GalleryIndexRoute
@@ -103,6 +118,7 @@ export interface FileRoutesByFullPath {
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/apply/index-gemini': typeof ApplyIndexGeminiRoute
   '/about': typeof AboutIndexRoute
   '/apply': typeof ApplyIndexRoute
   '/gallery': typeof GalleryIndexRoute
@@ -112,6 +128,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
+  '/apply/index-gemini': typeof ApplyIndexGeminiRoute
   '/about/': typeof AboutIndexRoute
   '/apply/': typeof ApplyIndexRoute
   '/gallery/': typeof GalleryIndexRoute
@@ -120,15 +137,35 @@ export interface FileRoutesById {
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/apply' | '/gallery' | '/join-us'
+  fullPaths:
+    | '/'
+    | '/apply/index-gemini'
+    | '/about'
+    | '/apply'
+    | '/gallery'
+    | '/join-us'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/apply' | '/gallery' | '/join-us'
-  id: '__root__' | '/' | '/about/' | '/apply/' | '/gallery/' | '/join-us/'
+  to:
+    | '/'
+    | '/apply/index-gemini'
+    | '/about'
+    | '/apply'
+    | '/gallery'
+    | '/join-us'
+  id:
+    | '__root__'
+    | '/'
+    | '/apply/index-gemini'
+    | '/about/'
+    | '/apply/'
+    | '/gallery/'
+    | '/join-us/'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApplyIndexGeminiRoute: typeof ApplyIndexGeminiRoute
   AboutIndexRoute: typeof AboutIndexRoute
   ApplyIndexRoute: typeof ApplyIndexRoute
   GalleryIndexRoute: typeof GalleryIndexRoute
@@ -137,6 +174,7 @@ export interface RootRouteChildren {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApplyIndexGeminiRoute: ApplyIndexGeminiRoute,
   AboutIndexRoute: AboutIndexRoute,
   ApplyIndexRoute: ApplyIndexRoute,
   GalleryIndexRoute: GalleryIndexRoute,
@@ -154,6 +192,7 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
+        "/apply/index-gemini",
         "/about/",
         "/apply/",
         "/gallery/",
@@ -162,6 +201,9 @@ export const routeTree = rootRoute
     },
     "/": {
       "filePath": "index.tsx"
+    },
+    "/apply/index-gemini": {
+      "filePath": "apply/index-gemini.tsx"
     },
     "/about/": {
       "filePath": "about/index.tsx"
