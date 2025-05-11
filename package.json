@@ -14,12 +14,14 @@
     "@tanstack/react-router": "^1.120.2",
     "@tanstack/react-router-devtools": "^1.120.2",
     "@tanstack/react-start": "^1.120.2",
+    "@tanstack/zod-form-adapter": "^0.42.1",
     "framer-motion": "^12.10.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "server": "link:@tanstack/react-router/server",
     "tailwind-merge": "^2.6.0",
-    "vinxi": "0.5.3"
+    "vinxi": "0.5.3",
+    "zod": "^3.24.4"
   },
   "devDependencies": {
     "@types/node": "^22.15.14",

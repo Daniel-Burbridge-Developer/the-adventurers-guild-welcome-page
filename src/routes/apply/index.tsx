@@ -6,5 +6,9 @@ export const Route = createFileRoute('/apply/')({
 });
 
 function RouteComponent() {
-  return <div>Hello "/apply/"!</div>;
+  return (
+    <div className='mt-20'>
+      <ApplicationForm />
+    </div>
+  );
 }
