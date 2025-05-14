@@ -8,3 +8,8 @@
 - [ ] ESlint for tailwind
 - [ ] Redesign with ShadCN
 - [ ] Revisit Original Documentation / Manifest
+
+- [ ] Admin Page to Accept / Decline applications.
+- [ ] Individual member pages, dynamically add the "our members" section.
+
+- [ ] member high scores etc for clicky game.
