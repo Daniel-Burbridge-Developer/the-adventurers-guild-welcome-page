@@ -14,7 +14,6 @@ export const members = sqliteTable('Members', {
   contactScroll: text('contact_scroll').unique(),
   race: text('race').notNull(),
   class: text('class').notNull(),
-  role: text('role').notNull(),
   level: integer('level').default(1),
   kills: integer('kills').default(0),
   title: text('title'),
