@@ -14,7 +14,8 @@ async function main() {
   // Prepare the data for bulk insert
   const rows = memberList.map((m) => ({
     memberId: m.memberId,
-    name: m.name,
+    firstName: m.firstName,
+    lastName: m.lastName,
     guildRank: m.guildRank ?? null,
     contactScroll: m.contactScroll,
     race: m.race,
@@ -22,7 +23,7 @@ async function main() {
     level: m.level ?? 1,
     kills: m.kills ?? 0,
     title: m.title ?? null,
-    pronouns: Array.isArray(m.pronouns) ? m.pronouns.join(',') : null,
+    pronouns: Array.isArray(m.pronouns) ? JSON.stringify(m.pronouns) : '[]',
     avatarUrl: m.avatarUrl ?? null,
     profileBannerUrl: m.profileBannerUrl ?? null,
     bio: m.bio ?? null,

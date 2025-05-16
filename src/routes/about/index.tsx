@@ -8,8 +8,7 @@ interface Member {
 }
 
 const fetchMembers = createServerFn().handler(async () => {
-  await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate a delay
-
+  // await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate a delay
   const response = await fetch(
     'https://randomuser.me/api/?inc=name,picture&results=32'
   );

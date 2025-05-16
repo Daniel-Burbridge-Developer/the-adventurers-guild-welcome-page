@@ -5,11 +5,13 @@ import {
   integer,
   unique,
 } from 'drizzle-orm/sqlite-core';
+import { sql } from 'drizzle-orm';
 
 // Define the members table
 export const members = sqliteTable('Members', {
   memberId: int('member_id').primaryKey({ autoIncrement: true }),
-  name: text('name').notNull(),
+  firstName: text('first_name').notNull(),
+  lastName: text('last_name').notNull(),
   guildRank: text('guild_rank'),
   contactScroll: text('contact_scroll').unique(),
   race: text('race').notNull(),
@@ -17,11 +19,10 @@ export const members = sqliteTable('Members', {
   level: integer('level').default(1),
   kills: integer('kills').default(0),
   title: text('title'),
-  pronouns: text('pronouns'),
+  pronouns: text('pronouns').default(sql`'[]'`),
   avatarUrl: text('avatar_url'),
   profileBannerUrl: text('profile_banner_url'),
   bio: text('bio'),
-  location: text('location'),
   joinDate: integer('join_date').default(Date.now()), // Store as integer (ms since epoch)
   lastActive: integer('last_active').default(Date.now()), // Store as integer (ms since epoch)
 });
