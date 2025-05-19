@@ -18,6 +18,10 @@ async function main() {
       .set({
         firstName: m.firstName,
         lastName: m.lastName,
+        inviteStatus:
+          m.inviteStatus as typeof members.$inferInsert.inviteStatus,
+        inviteSentAt: m.inviteSentAt,
+        inviteRespondedAt: m.inviteRespondedAt,
         guildRank: m.guildRank ?? null,
         contactScroll: m.contactScroll,
         race: m.race,

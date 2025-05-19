@@ -12,6 +12,21 @@ export const members = sqliteTable('Members', {
   memberId: int('member_id').primaryKey({ autoIncrement: true }),
   firstName: text('first_name').notNull(),
   lastName: text('last_name').notNull(),
+  inviteStatus: text('invite_status', {
+    enum: [
+      'invited', // Invited, awaiting response
+      'requested', // Requested to join, awaiting approval
+      'approved', // Request approved (joined via request)
+      'accepted', // Invite accepted (joined via invite)
+      'declined', // Invite declined
+      'rejected', // Request rejected
+      'pending', // General pending state
+    ],
+  })
+    .notNull()
+    .default('pending'),
+  inviteSentAt: integer('invite_sent_at'), // Timestamp when invite was sent
+  inviteRespondedAt: integer('invite_responded_at'), // Timestamp when invite was responded to
   guildRank: text('guild_rank'),
   contactScroll: text('contact_scroll').unique(),
   race: text('race').notNull(),
@@ -23,7 +38,6 @@ export const members = sqliteTable('Members', {
   avatarUrl: text('avatar_url'),
   profileBannerUrl: text('profile_banner_url'),
   bio: text('bio'),
-  joinDate: integer('join_date').default(Date.now()), // Store as integer (ms since epoch)
   lastActive: integer('last_active').default(Date.now()), // Store as integer (ms since epoch)
 });
 

@@ -16,6 +16,9 @@ async function main() {
     memberId: m.memberId,
     firstName: m.firstName,
     lastName: m.lastName,
+    inviteStatus: m.inviteStatus as typeof members.$inferInsert.inviteStatus,
+    inviteSentAt: m.inviteSentAt,
+    inviteRespondedAt: m.inviteRespondedAt,
     guildRank: m.guildRank ?? null,
     contactScroll: m.contactScroll,
     race: m.race,
@@ -28,7 +31,6 @@ async function main() {
     profileBannerUrl: m.profileBannerUrl ?? null,
     bio: m.bio ?? null,
     location: null, // Not present in JSON
-    joinDate: undefined, // Use DB default
     lastActive: undefined, // Use DB default
   }));
 
