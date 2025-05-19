@@ -1,23 +1,57 @@
 import { useForm } from '@tanstack/react-form';
+import { drizzle } from 'drizzle-orm/libsql';
+import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
+import { members } from '~/db/schema';
 
 // Define the Zod schema for your form with email validation for contactScroll
 const applicantSchema = z.object({
-  applicantName: z.string().min(1, 'Applicant Name is required'),
+  applicantName: z
+    .string()
+    .min(1, 'Applicant Name is required')
+    .regex(/^[A-Za-z]+(?: [A-Za-z]+)$/, 'First and Last Name Only'),
   contactScroll: z
     .string()
     .email('A valid email address is required for Correspondence')
-    .min(1, 'Contact Scroll is required'), // Added min(1) because email() allows empty string
+    .min(1, 'Contact Scroll is required'),
   lineage: z.string().min(1, 'Lineage (Race) is required'),
   vocation: z.string().min(1, 'Vocation (Class/Profession) is required'),
-  // desiredRole will now either be one of the options or the specified text
-  desiredRole: z.string().min(1, 'Desired Role is required'),
-  previousDeeds: z.string(), // Always a string, never undefined
-  reasonForJoining: z.string(), // Always a string, never undefined
 });
 
 // Infer the form data type from the schema
 type ApplicationFormData = z.infer<typeof applicantSchema>;
+
+// Use a validator so the handler receives { data }
+export const submitApplication = createServerFn()
+  .validator((data: ApplicationFormData) => applicantSchema.parse(data))
+  .handler(async ({ data }) => {
+    // Connect to your DB (adjust as needed for your setup)
+    const db = drizzle({
+      connection: {
+        url: process.env.TURSO_DATABASE_URL!,
+        authToken: process.env.TURSO_AUTH_TOKEN!,
+      },
+    });
+
+    // Split applicantName into firstName and lastName
+    const [firstName, ...rest] = data.applicantName.trim().split(' ');
+    const lastName = rest.join(' ') || '';
+
+    try {
+      await db.insert(members).values({
+        firstName,
+        lastName,
+        inviteStatus: 'requested',
+        contactScroll: data.contactScroll,
+        race: data.lineage,
+        class: data.vocation,
+        pronouns: '[]',
+      });
+      return { success: true };
+    } catch (e) {
+      return { error: 'Failed to submit application.' };
+    }
+  });
 
 function ApplicationForm() {
   // Initialize the form with useForm
@@ -32,18 +66,30 @@ function ApplicationForm() {
       contactScroll: '',
       lineage: '',
       vocation: '',
-      desiredRole: '',
-      previousDeeds: '',
-      reasonForJoining: '',
     },
+
+    //   onSubmit: async ({ value }) => {
+    //     // Handle form submission
+    //     console.log('Application submitted:', value);
+    //     alert(
+    //       'Your application has been received! The guild will review your request and send a response via scroll.'
+    //     );
+
+    //     // Reset the form after successful submission
+    //     form.reset();
+    //   },
+    // });
+
     onSubmit: async ({ value }) => {
-      // Handle form submission
-      console.log('Application submitted:', value);
-      alert(
-        'Your application has been received! The guild will review your request and send a response via scroll.'
-      );
-      // Reset the form after successful submission
-      form.reset();
+      const result = await submitApplication({ data: value });
+      if (result?.success) {
+        alert(
+          'Your application has been received! The guild will review your request and send a response via scroll.'
+        );
+        form.reset();
+      } else {
+        alert(result?.error || 'Submission failed.');
+      }
     },
   });
 
@@ -64,11 +110,7 @@ function ApplicationForm() {
             className='space-y-4'
           >
             {/* Applicant Name Field */}
-            <form.Field
-              name='applicantName'
-              // Validators are now handled by the form-level validator
-              // No need for field-level validators unless adding *extra* validation
-            >
+            <form.Field name='applicantName'>
               {(field) => (
                 <div>
                   <label
@@ -186,86 +228,6 @@ function ApplicationForm() {
                           .join(', ')}
                       </em>
                     )}
-                </div>
-              )}
-            </form.Field>
-
-            {/* Desired Role Field (Handles Select and Conditional Text Input) */}
-            <form.Field name='desiredRole'>
-              {(field) => (
-                <div>
-                  <label
-                    htmlFor={field.name}
-                    className='block text-gray-300 text-sm font-bold mb-2'
-                  >
-                    Desired Role in the Guild:
-                  </label>
-                  {/* Select input */}
-                  <select
-                    id={field.name}
-                    name={field.name}
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-200 leading-tight focus:outline-none focus:shadow-outline bg-gray-700'
-                  >
-                    <option value=''>-- Select a Role --</option>
-                    <option value='Guardian'>Guardian</option>
-                    <option value='Arcanist'>Arcanist</option>
-                    <option value='Shadow Walker'>Shadow Walker</option>
-                    <option value='Divine Hand'>Divine Hand</option>
-                    <option value='Wild Tracker'>Wild Tracker</option>
-                  </select>
-                </div>
-              )}
-            </form.Field>
-
-            {/* Previous Deeds Field (Optional) */}
-            <form.Field name='previousDeeds'>
-              {(field) => (
-                <div>
-                  <label
-                    htmlFor={field.name}
-                    className='block text-gray-300 text-sm font-bold mb-2'
-                  >
-                    Previous Deeds (Optional):
-                  </label>
-                  <textarea
-                    id={field.name}
-                    name={field.name}
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-200 leading-tight focus:outline-none focus:shadow-outline bg-gray-700'
-                    rows={3}
-                    placeholder='Share any relevant history or accomplishments.'
-                  />
-                  {/* Optional fields don't typically show validation errors unless you add specific validation rules */}
-                </div>
-              )}
-            </form.Field>
-
-            {/* Reason for Joining Field (Optional) */}
-            <form.Field name='reasonForJoining'>
-              {(field) => (
-                <div>
-                  <label
-                    htmlFor={field.name}
-                    className='block text-gray-300 text-sm font-bold mb-2'
-                  >
-                    Reason for Joining Our Guild (Optional):
-                  </label>
-                  <textarea
-                    id={field.name}
-                    name={field.name}
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-200 leading-tight focus:outline-none focus:shadow-outline bg-gray-700'
-                    rows={4}
-                    placeholder='Tell us why you seek our fellowship.'
-                  />
-                  {/* Optional fields don't typically show validation errors unless you add specific validation rules */}
                 </div>
               )}
             </form.Field>
